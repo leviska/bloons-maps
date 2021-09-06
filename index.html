@@ -58,6 +58,7 @@
 		<div class="p-2"></div>
 		<h1 class="p-2 h4 mb-3 font-weight-normal" id="map">Click to randomize map</h1>
 		<button class="p-2 btn btnn btn-lg btn-primary btn-block" onclick="randall()">Randomize</button>
+		<button class="p-2 btn btnn btn-lg btn-primary btn-block" onclick="nextMap()">Next map</button>
 		<div class="p-2"></div>
 		<div class="p-2"></div>
 		<h1 class="p-2 h4 mb-3 font-weight-normal" id="mode">Select a map first</h1>
@@ -151,7 +152,7 @@
 				start++
 			}
 			for (let i = 0; i < maps.length; i++) {
-				curMap = i + start
+				curMap = (i + start) % maps.length
 				if (randmode()) {
 					$("#map").text("Map: " + maps[curMap] + " (" + mapCat[curMap] + ")")
 					$("#modebtn").prop("disabled", false)
@@ -165,6 +166,23 @@
 			$("#compbtn").prop("disabled", true)
 			$("#resetbtn").prop("disabled", true)
 		}
+
+		function nextMap() {
+			curMap = (curMap + 1) % maps.length
+			$("#modeperc").text("Completed " + calcperc(curMap) + "/" + modes.length)
+			$("#map").text("Map: " + maps[curMap] + " (" + mapCat[curMap] + ")")
+			if (randmode()) {
+				$("#modebtn").prop("disabled", false)
+				$("#compbtn").prop("disabled", false)
+				$("#resetbtn").prop("disabled", false)
+				return true
+			}
+			$("#modebtn").prop("disabled", true)
+			$("#compbtn").prop("disabled", true)
+			$("#resetbtn").prop("disabled", false)
+			return false
+		}
+
 
 		function complete() {
 			if (curMap < 0 || curMode < 0) {
