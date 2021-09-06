@@ -61,11 +61,15 @@
 		<div class="p-2"></div>
 		<div class="p-2"></div>
 		<h1 class="p-2 h4 mb-3 font-weight-normal" id="mode">Select a map first</h1>
+		<h1 class="p-2 h4 mb-3 font-weight-normal" id="modeperc"></h1>
 		<button class="p-2 btn btnn btn-lg btn-primary btn-block" onclick="randmode()" id="modebtn" disabled>Randomize
 			mode</button>
 		<div class="p-2"></div>
 		<button class="p-2 btn btnn btn-lg btn-primary btn-block" onclick="complete()" id="compbtn"
 			disabled>Completed</button>
+		<button class="p-2 btn btnn btn-lg btn-primary btn-block" onclick="resetcomp()" id="resetbtn" disabled>Reset
+			modes for
+			map</button>
 		<div class="p-2"></div>
 	</div>
 
@@ -121,7 +125,7 @@
 		var completed = null
 		if (!document.cookie) {
 			try {
-				completed = JSON.parse(Cookies.get("completed"))
+				completed = JSON.parse(localStorage.getItem("completed"))
 			}
 			catch (e) {
 				completed = null
@@ -152,12 +156,14 @@
 					$("#map").text("Map: " + maps[curMap] + " (" + mapCat[curMap] + ")")
 					$("#modebtn").prop("disabled", false)
 					$("#compbtn").prop("disabled", false)
+					$("#resetbtn").prop("disabled", false)
 					return true
 				}
 			}
 			$("#map").text("All maps completed!")
 			$("#modebtn").prop("disabled", true)
 			$("#compbtn").prop("disabled", true)
+			$("#resetbtn").prop("disabled", true)
 		}
 
 		function complete() {
@@ -165,9 +171,33 @@
 				return
 			}
 			completed[curMap][curMode] = true
-			Cookies.set("completed", JSON.stringify(completed))
-			console.log(Cookies.get("completed"))
+			localStorage.setItem("completed", JSON.stringify(completed))
+			$("#modeperc").text("Completed " + calcperc(curMap) + "/" + modes.length)
 			randmode()
+		}
+
+		function resetcomp() {
+			if (curMap < 0) {
+				return
+			}
+			for (let j = 0; j < modes.length; j++) {
+				completed[curMap][j] = false
+			}
+			localStorage.setItem("completed", JSON.stringify(completed))
+			$("#modebtn").prop("disabled", false)
+			$("#compbtn").prop("disabled", false)
+			$("#modeperc").text("Completed " + calcperc(curMap) + "/" + modes.length)
+			randmode()
+		}
+
+		function calcperc(map) {
+			let cnt = 0
+			for (let i = 0; i < modes.length; i++) {
+				if (completed[map][i]) {
+					cnt++
+				} 
+			}
+			return cnt
 		}
 
 		function randmode() {
@@ -190,6 +220,7 @@
 						continue
 					}
 					$("#mode").text("Mode: " + modes[newMode] + " (" + modeCat[newMode] + ")")
+					$("#modeperc").text("Completed " + calcperc(curMap) + "/" + modes.length)
 					curMode = newMode
 					return true
 				}
