@@ -55,15 +55,17 @@
 	<div class="form-signin d-flex flex-column align-items-center rounded bg-dark text-white">
 		<h1 class="p-2 h3 mb-3 font-weight-normal">Map picker</h1>
 		<div class="p-2"></div>
-		<button class="p-2 btn btnn btn-lg btn-primary btn-block" onclick="randall()">Randomize all</button>
-		<div class="p-2"></div>
 		<div class="p-2"></div>
 		<h1 class="p-2 h4 mb-3 font-weight-normal" id="map">Click to randomize map</h1>
-		<button class="p-2 btn btnn btn-lg btn-primary btn-block" onclick="randmap()">Randomize</button>
+		<button class="p-2 btn btnn btn-lg btn-primary btn-block" onclick="randall()">Randomize</button>
 		<div class="p-2"></div>
 		<div class="p-2"></div>
-		<h1 class="p-2 h4 mb-3 font-weight-normal" id="mode">Click to randomize mode</h1>
-		<button class="p-2 btn btnn btn-lg btn-primary btn-block" onclick="randmode()">Randomize</button>
+		<h1 class="p-2 h4 mb-3 font-weight-normal" id="mode">Select a map first</h1>
+		<button class="p-2 btn btnn btn-lg btn-primary btn-block" onclick="randmode()" id="modebtn" disabled>Randomize
+			mode</button>
+		<div class="p-2"></div>
+		<button class="p-2 btn btnn btn-lg btn-primary btn-block" onclick="complete()" id="compbtn"
+			disabled>Completed</button>
 		<div class="p-2"></div>
 	</div>
 
@@ -73,12 +75,10 @@
 	<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
 		integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
 		crossorigin="anonymous"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
-		integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
-		crossorigin="anonymous"></script>
 	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
 		integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
 		crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js"></script>
 
 	<script type="text/javascript">
 		var maps = [
@@ -98,7 +98,10 @@
 			mapCat.push(cats[c])
 		}
 
-		var modes = ["Easy", "Primary Monkeys Only", "Deflation", "Medium", "Reverse", "Military Monkeys Only", "Apopalypse", "Hard", "Alternate Bloons Rounds", "Magic Monkeys Only", "Impoppable", "Double HP MOABs", "C.H.I.M.P.S."]
+		var modes = [
+			"Easy", "Primary Monkeys Only", "Deflation",
+			"Medium", "Reverse", "Military Monkeys Only", "Apopalypse",
+			"Hard", "Alternate Bloons Rounds", "Magic Monkeys Only", "Impoppable", "Double HP MOABs", "C.H.I.M.P.S.", "Half Cash"]
 		var cats = ["Easy", "Medium", "Hard"]
 		var modeCat = []
 		c = 0
@@ -109,19 +112,96 @@
 			modeCat.push(cats[c])
 		}
 
+		var modeDep = [
+			-1, 0, 1,
+			-1, 3, 3, 5,
+			-1, 7, 7, 8, 9, 10, 11,
+		]
+
+		var completed = null
+		if (!document.cookie) {
+			try {
+				completed = JSON.parse(Cookies.get("completed"))
+			}
+			catch (e) {
+				completed = null
+			}
+		}
+
+		if (!completed) {
+			completed = []
+			for (let i = 0; i < maps.length; i++) {
+				completed.push([])
+				for (let j = 0; j < modes.length; j++) {
+					completed[i].push(false)
+				}
+			}
+		}
+
+		var curMap = -1
+		var curMode = -1
+
 		function randall() {
-			randmap()
+			let start = Math.floor(Math.random() * maps.length)
+			if (start == curMap) {
+				start++
+			}
+			for (let i = 0; i < maps.length; i++) {
+				curMap = i + start
+				if (randmode()) {
+					$("#map").text("Map: " + maps[curMap] + " (" + mapCat[curMap] + ")")
+					$("#modebtn").prop("disabled", false)
+					$("#compbtn").prop("disabled", false)
+					return true
+				}
+			}
+			$("#map").text("All maps completed!")
+			$("#modebtn").prop("disabled", true)
+			$("#compbtn").prop("disabled", true)
+		}
+
+		function complete() {
+			if (curMap < 0 || curMode < 0) {
+				return
+			}
+			completed[curMap][curMode] = true
+			Cookies.set("completed", JSON.stringify(completed))
+			console.log(Cookies.get("completed"))
 			randmode()
 		}
 
-		function randmap() {
-			let i = Math.floor(Math.random() * maps.length)
-			$("#map").text("Map: " + maps[i] + " (" + mapCat[i] + ")") 
-		}
-
 		function randmode() {
-			let i = Math.floor(Math.random() * modes.length)
-			$("#mode").text("Mode: " + modes[i] + " (" + modeCat[i] + ")") 
+			if (curMap < 0) {
+				$("#modebtn").prop("disabled", true)
+				$("#compbtn").prop("disabled", true)
+				return false
+			}
+			let start = Math.floor(Math.random() * modes.length)
+			canKeep = false
+			for (let i = 0; i < modes.length; i++) {
+				newMode = (i + start) % modes.length
+				if (completed[curMap][newMode] == true) {
+					continue
+				}
+				dep = modeDep[newMode]
+				if (dep < 0 || completed[curMap][dep] == true) {
+					if (newMode == curMode) {
+						canKeep = true
+						continue
+					}
+					$("#mode").text("Mode: " + modes[newMode] + " (" + modeCat[newMode] + ")")
+					curMode = newMode
+					return true
+				}
+			}
+			if (canKeep) {
+				return true
+			}
+			curMode = -1
+			$("#modebtn").prop("disabled", true)
+			$("#compbtn").prop("disabled", true)
+			$("#mode").text("All completed!")
+			return false
 		}
 	</script>
 
