@@ -54,8 +54,9 @@
 <body class="text-center bg-secondary">
 	<div class="form-signin d-flex flex-column align-items-center rounded bg-dark text-white">
 		<h1 class="p-2 h3 mb-3 font-weight-normal">Map picker</h1>
-		<div class="p-2"></div>
-		<div class="p-2"></div>
+		<div class="p-2">
+			<img src="" class="img-fluid" style="height: 220px;" id="mapimg">
+		</div>
 		<h1 class="p-2 h4 mb-3 font-weight-normal" id="map">Click to randomize map</h1>
 		<button class="p-2 btn btnn btn-lg btn-primary btn-block" onclick="randall()">Randomize</button>
 		<button class="p-2 btn btnn btn-lg btn-primary btn-block" onclick="nextMap()">Next map</button>
@@ -146,6 +147,17 @@
 		var curMap = -1
 		var curMode = -1
 
+		function updateMap(newMap) {
+			curMap = newMap
+			if (newMap < 0) {
+				$("#map").text("All maps completed!")
+				$("#mapimg").attr("src", "")
+			} else {
+				$("#map").text("Map: " + maps[curMap] + " (" + mapCat[curMap] + ")")
+				$("#mapimg").attr("src", "images/" + newMap + ".png")
+			}
+		}
+
 		function randall() {
 			let start = Math.floor(Math.random() * maps.length)
 			if (start == curMap) {
@@ -154,14 +166,14 @@
 			for (let i = 0; i < maps.length; i++) {
 				curMap = (i + start) % maps.length
 				if (randmode()) {
-					$("#map").text("Map: " + maps[curMap] + " (" + mapCat[curMap] + ")")
+					updateMap(curMap)
 					$("#modebtn").prop("disabled", false)
 					$("#compbtn").prop("disabled", false)
 					$("#resetbtn").prop("disabled", false)
 					return true
 				}
 			}
-			$("#map").text("All maps completed!")
+			updateMap(-1)
 			$("#modebtn").prop("disabled", true)
 			$("#compbtn").prop("disabled", true)
 			$("#resetbtn").prop("disabled", true)
@@ -170,7 +182,7 @@
 		function nextMap() {
 			curMap = (curMap + 1) % maps.length
 			$("#modeperc").text("Completed " + calcperc(curMap) + "/" + modes.length)
-			$("#map").text("Map: " + maps[curMap] + " (" + mapCat[curMap] + ")")
+			updateMap(curMap)
 			if (randmode()) {
 				$("#modebtn").prop("disabled", false)
 				$("#compbtn").prop("disabled", false)
